@@ -123,6 +123,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     ),
             ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_transactions',
         onPressed: () async {
           await Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const AddTransactionScreen()),

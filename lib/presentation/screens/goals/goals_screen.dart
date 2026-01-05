@@ -94,6 +94,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     ),
             ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_goals',
         onPressed: () async {
           await Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const AddGoalScreen()),

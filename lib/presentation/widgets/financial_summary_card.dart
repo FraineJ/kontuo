@@ -18,17 +18,12 @@ class FinancialSummaryCard extends StatelessWidget {
     double income = 0;
     double expenses = 0;
 
-    final now = DateTime.now();
-
+    // Incluir TODAS las transacciones históricas para el balance total
     for (var transaction in transactions) {
-      // Incluir todas las transacciones del mes actual
-      if (transaction.date.year == now.year && 
-          transaction.date.month == now.month) {
-        if (transaction.type == TransactionType.income) {
-          income += transaction.amount;
-        } else {
-          expenses += transaction.amount;
-        }
+      if (transaction.type == TransactionType.income) {
+        income += transaction.amount;
+      } else {
+        expenses += transaction.amount;
       }
     }
 

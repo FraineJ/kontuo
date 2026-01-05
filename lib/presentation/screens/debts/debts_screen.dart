@@ -93,6 +93,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                     ),
             ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_debts',
         onPressed: () async {
           await Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const AddDebtScreen()),

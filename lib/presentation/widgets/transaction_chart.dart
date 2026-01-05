@@ -12,29 +12,42 @@ class TransactionChart extends StatelessWidget {
     final now = DateTime.now();
     final spots = <FlSpot>[];
     
-    // Get last 30 days data
+    // Calcular balance inicial (todas las transacciones anteriores al período de 30 días)
+    final firstDay = now.subtract(const Duration(days: 29));
+    final firstDayStart = DateTime(firstDay.year, firstDay.month, firstDay.day);
+    
+    double initialBalance = 0;
+    for (var transaction in transactions) {
+      if (transaction.date.isBefore(firstDayStart)) {
+        if (transaction.type == TransactionType.income) {
+          initialBalance += transaction.amount;
+        } else {
+          initialBalance -= transaction.amount;
+        }
+      }
+    }
+    
+    // Get last 30 days data con balance acumulado
+    double cumulativeBalance = initialBalance;
     for (int i = 29; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final dayStart = DateTime(date.year, date.month, date.day);
       final dayEnd = dayStart.add(const Duration(days: 1));
       
-      double balance = 0;
+      double dailyChange = 0;
       for (var transaction in transactions) {
         if (transaction.date.isAfter(dayStart) && transaction.date.isBefore(dayEnd)) {
           if (transaction.type == TransactionType.income) {
-            balance += transaction.amount;
+            dailyChange += transaction.amount;
           } else {
-            balance -= transaction.amount;
+            dailyChange -= transaction.amount;
           }
         }
       }
       
-      // Cumulative balance
-      if (spots.isNotEmpty) {
-        balance += spots.last.y;
-      }
-      
-      spots.add(FlSpot((29 - i).toDouble(), balance));
+      // Acumular el balance
+      cumulativeBalance += dailyChange;
+      spots.add(FlSpot((29 - i).toDouble(), cumulativeBalance));
     }
     
     return spots;

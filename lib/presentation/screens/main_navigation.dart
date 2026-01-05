@@ -62,6 +62,7 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(
+              heroTag: 'fab_home',
               onPressed: () async {
                 await Navigator.of(context).push(
                   MaterialPageRoute(
