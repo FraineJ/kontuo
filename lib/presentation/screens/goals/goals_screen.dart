@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../data/models/goal.dart';
 import '../../../data/services/storage_service.dart';
 import 'add_goal_screen.dart';
+import 'add_payment_dialog.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -89,6 +90,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                             );
                             _loadGoals();
                           },
+                          onRefresh: _loadGoals,
                         );
                       },
                     ),
@@ -110,8 +112,21 @@ class _GoalsScreenState extends State<GoalsScreen> {
 class _GoalListItem extends StatelessWidget {
   final Goal goal;
   final VoidCallback onTap;
+  final VoidCallback onRefresh;
 
-  const _GoalListItem({required this.goal, required this.onTap});
+  const _GoalListItem({
+    required this.goal, 
+    required this.onTap,
+    required this.onRefresh,
+  });
+
+  Future<void> _showAddPaymentDialog(BuildContext context) async {
+    final result = await AddPaymentDialog.show(context, goal);
+    
+    if (result == true) {
+      onRefresh();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,80 +136,103 @@ class _GoalListItem extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
             children: [
-              SizedBox(
-                width: 60,
-                height: 60,
-                child: Stack(
-                  children: [
-                    SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: CircularProgressIndicator(
-                        value: goal.progress.clamp(0.0, 1.0),
-                        strokeWidth: 4,
-                        backgroundColor: AppTheme.borderColor,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          goal.isCompleted ? AppTheme.positiveGreen : AppTheme.accentBlue,
+              Row(
+                children: [
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(
+                            value: goal.progress.clamp(0.0, 1.0),
+                            strokeWidth: 4,
+                            backgroundColor: AppTheme.borderColor,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              goal.isCompleted ? AppTheme.positiveGreen : AppTheme.accentBlue,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    Center(
-                      child: Text(
-                        '${(goal.progress * 100).toInt()}%',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textPrimary,
+                        Center(
+                          child: Text(
+                            '${(goal.progress * 100).toInt()}%',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          goal.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        if (goal.description.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            goal.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Text(
+                          '\$${goal.currentAmount.toStringAsFixed(0)} / \$${goal.targetAmount.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: goal.isCompleted ? AppTheme.positiveGreen : AppTheme.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (goal.isCompleted)
+                    const Icon(
+                      Icons.check_circle,
+                      color: AppTheme.positiveGreen,
+                    ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      goal.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary,
+              if (!goal.isCompleted) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showAddPaymentDialog(context),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Agregar Abono'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.positiveGreen,
+                      side: const BorderSide(color: AppTheme.positiveGreen),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    if (goal.description.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        goal.description,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Text(
-                      '\$${goal.currentAmount.toStringAsFixed(0)} / \$${goal.targetAmount.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: goal.isCompleted ? AppTheme.positiveGreen : AppTheme.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              if (goal.isCompleted)
-                const Icon(
-                  Icons.check_circle,
-                  color: AppTheme.positiveGreen,
-                ),
+              ],
             ],
           ),
         ),

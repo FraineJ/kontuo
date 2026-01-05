@@ -3,6 +3,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/goal.dart';
 import '../../data/services/storage_service.dart';
 import '../screens/goals/goals_screen.dart';
+import '../screens/goals/add_payment_dialog.dart';
 
 class GoalsWidget extends StatefulWidget {
   final VoidCallback onRefresh;
@@ -99,7 +100,13 @@ class _GoalsWidgetState extends State<GoalsWidget> {
                     )
                   : Column(
                       children: _goals.map((goal) {
-                        return _GoalTile(goal: goal);
+                        return _GoalTile(
+                          goal: goal,
+                          onRefresh: () {
+                            _loadGoals();
+                            widget.onRefresh();
+                          },
+                        );
                       }).toList(),
                     ),
         ],
@@ -110,67 +117,81 @@ class _GoalsWidgetState extends State<GoalsWidget> {
 
 class _GoalTile extends StatelessWidget {
   final Goal goal;
+  final VoidCallback onRefresh;
 
-  const _GoalTile({required this.goal});
+  const _GoalTile({required this.goal, required this.onRefresh});
+
+  Future<void> _showAddPaymentDialog(BuildContext context) async {
+    final result = await AddPaymentDialog.show(context, goal);
+    
+    if (result == true) {
+      onRefresh();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
+      child: Column(
         children: [
-          SizedBox(
-            width: 60,
-            height: 60,
-            child: Stack(
-              children: [
-                SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: CircularProgressIndicator(
-                    value: goal.progress.clamp(0.0, 1.0),
-                    strokeWidth: 4,
-                    backgroundColor: AppTheme.borderColor,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentBlue),
-                  ),
-                ),
-                Center(
-                  child: Text(
-                    '${(goal.progress * 100).toInt()}%',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.textPrimary,
+          Row(
+            children: [
+              SizedBox(
+                width: 60,
+                height: 60,
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: CircularProgressIndicator(
+                        value: goal.progress.clamp(0.0, 1.0),
+                        strokeWidth: 4,
+                        backgroundColor: AppTheme.borderColor,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentBlue),
+                      ),
                     ),
-                  ),
+                    Center(
+                      child: Text(
+                        '${(goal.progress * 100).toInt()}%',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      goal.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '\$${goal.currentAmount.toStringAsFixed(0)} / \$${goal.targetAmount.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  goal.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '\$${goal.currentAmount.toStringAsFixed(0)} / \$${goal.targetAmount.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
+
         ],
       ),
     );
