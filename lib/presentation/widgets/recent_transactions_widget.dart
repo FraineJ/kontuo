@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../data/models/transaction.dart';
 import '../../data/services/storage_service.dart';
 import '../screens/transactions/add_transaction_screen.dart';
+import '../screens/transactions/transactions_screen.dart';
 
 class RecentTransactionsWidget extends StatelessWidget {
   final List<Transaction> transactions;
@@ -49,7 +50,9 @@ class RecentTransactionsWidget extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pushNamed('/transactions');
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const TransactionsScreen()),
+                  ).then((_) => onRefresh());
                 },
                 child: Text(
                   'Ver todas',
