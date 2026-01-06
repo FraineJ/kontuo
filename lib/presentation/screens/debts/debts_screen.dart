@@ -6,6 +6,7 @@ import '../../../data/models/debt.dart';
 import '../../../data/models/user_profile.dart';
 import '../../../data/services/storage_service.dart';
 import 'add_debt_screen.dart';
+import 'add_debt_payment_dialog.dart';
 import 'debt_type_selection_dialog.dart';
 
 class DebtsScreen extends StatefulWidget {
@@ -131,6 +132,16 @@ class _DebtsScreenState extends State<DebtsScreen> {
                             _loadDebts();
                           },
                           onDelete: () => _deleteDebt(debt),
+                          onPayment: () async {
+                            final result = await AddDebtPaymentDialog.show(
+                              context,
+                              debt,
+                              _userProfile,
+                            );
+                            if (result == true) {
+                              _loadDebts();
+                            }
+                          },
                         );
                       },
                     ),
@@ -154,12 +165,14 @@ class _DebtListItem extends StatelessWidget {
   final UserProfile? userProfile;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final VoidCallback onPayment;
 
   const _DebtListItem({
     required this.debt,
     this.userProfile,
     required this.onTap,
     required this.onDelete,
+    required this.onPayment,
   });
 
   String _getCurrencySymbol(String? currency) {
@@ -342,6 +355,25 @@ class _DebtListItem extends StatelessWidget {
                   ),
                 ],
               ),
+              if (!debt.isPaid) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onPayment,
+                    icon: const Icon(Icons.payment, size: 16),
+                    label: const Text('Realizar Pago', style: TextStyle(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.positiveGreen,
+                      side: const BorderSide(color: AppTheme.positiveGreen),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

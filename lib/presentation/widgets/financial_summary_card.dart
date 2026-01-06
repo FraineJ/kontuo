@@ -81,7 +81,7 @@ class FinancialSummaryCard extends StatelessWidget {
             currencyFormat.format(balance),
             style: TextStyle(
               fontSize: 40,
-              fontWeight: FontWeight.w300,
+              fontWeight: FontWeight.w600,
               color: balance >= 0 ? AppTheme.positiveGreen : AppTheme.negativeRed,
               letterSpacing: -1,
             ),

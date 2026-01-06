@@ -6,6 +6,7 @@ import '../../data/models/debt.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/services/storage_service.dart';
 import '../screens/debts/debts_screen.dart';
+import '../screens/debts/add_debt_payment_dialog.dart';
 
 class DebtsWidget extends StatefulWidget {
   final VoidCallback onRefresh;
@@ -117,6 +118,17 @@ class _DebtsWidgetState extends State<DebtsWidget> {
                         return _DebtTile(
                           debt: debt,
                           userProfile: _userProfile,
+                          onPayment: () async {
+                            final result = await AddDebtPaymentDialog.show(
+                              context,
+                              debt,
+                              _userProfile,
+                            );
+                            if (result == true) {
+                              _loadDebts();
+                              widget.onRefresh();
+                            }
+                          },
                         );
                       }).toList(),
                     ),
@@ -129,10 +141,12 @@ class _DebtsWidgetState extends State<DebtsWidget> {
 class _DebtTile extends StatelessWidget {
   final Debt debt;
   final UserProfile? userProfile;
+  final VoidCallback onPayment;
 
   const _DebtTile({
     required this.debt,
     this.userProfile,
+    required this.onPayment,
   });
 
   String _getCurrencySymbol(String? currency) {
@@ -263,12 +277,34 @@ class _DebtTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            '${(progress * 100).toInt()}% pagado',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textTertiary,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${(progress * 100).toInt()}% pagado',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textTertiary,
+                ),
+              ),
+              if (!debt.isPaid)
+                TextButton(
+                  onPressed: onPayment,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Pagar',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.positiveGreen,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
