@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:kontuo/data/models/credit_simulation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_profile.dart';
 import '../models/transaction.dart';
@@ -10,6 +11,7 @@ class StorageService {
   static const String _keyTransactions = 'transactions';
   static const String _keyGoals = 'goals';
   static const String _keyDebts = 'debts';
+  static const _keySimulations = 'credit_simulations';
 
   // User Profile
   Future<void> saveUserProfile(UserProfile profile) async {
@@ -140,6 +142,35 @@ class StorageService {
     await prefs.remove(_keyGoals);
     await prefs.remove(_keyDebts);
   }
+
+
+  Future<List<CreditSimulation>> getSimulations() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_keySimulations);
+    if (jsonString == null) return [];
+
+    final List decoded = jsonDecode(jsonString);
+    return decoded.map((e) => CreditSimulation.fromJson(e)).toList();
+  }
+
+  Future<void> saveSimulations(List<CreditSimulation> simulations) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = simulations.map((e) => e.toJson()).toList();
+    await prefs.setString(_keySimulations, jsonEncode(jsonList));
+  }
+
+  Future<void> addSimulation(CreditSimulation simulation) async {
+    final list = await getSimulations();
+    list.add(simulation);
+    await saveSimulations(list);
+  }
+
+  Future<void> deleteSimulation(String id) async {
+    final list = await getSimulations();
+    list.removeWhere((s) => s.id == id);
+    await saveSimulations(list);
+  }
+
 }
 
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kontuo/presentation/widgets/CreditSimulationsWidget.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/user_profile.dart';
 import '../../../data/models/transaction.dart';
@@ -118,6 +119,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     GoalsWidget(onRefresh: _loadData),
                     const SizedBox(height: 24),
                     DebtsWidget(onRefresh: _loadData),
+                    const SizedBox(height: 24),
+                    CreditSimulationsWidget(onRefresh: _loadData),
                     const SizedBox(height: 80), // Space for FAB
                   ],
                 ),
