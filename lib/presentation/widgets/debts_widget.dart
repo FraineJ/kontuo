@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/constants/colombian_banks.dart';
 import '../../data/models/debt.dart';
+import '../../data/models/user_profile.dart';
 import '../../data/services/storage_service.dart';
 import '../screens/debts/debts_screen.dart';
 
@@ -16,19 +19,31 @@ class DebtsWidget extends StatefulWidget {
 class _DebtsWidgetState extends State<DebtsWidget> {
   final StorageService _storageService = StorageService();
   List<Debt> _debts = [];
+  UserProfile? _userProfile;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadDebts();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final debts = await _storageService.getDebts();
+    final profile = await _storageService.getUserProfile();
+    setState(() {
+      _debts = debts.where((d) => !d.isPaid).take(3).toList();
+      _userProfile = profile;
+      _isLoading = false;
+    });
   }
 
   Future<void> _loadDebts() async {
     final debts = await _storageService.getDebts();
+    final profile = await _storageService.getUserProfile();
     setState(() {
       _debts = debts.where((d) => !d.isPaid).take(3).toList();
-      _isLoading = false;
+      _userProfile = profile;
     });
   }
 
@@ -99,7 +114,10 @@ class _DebtsWidgetState extends State<DebtsWidget> {
                     )
                   : Column(
                       children: _debts.map((debt) {
-                        return _DebtTile(debt: debt);
+                        return _DebtTile(
+                          debt: debt,
+                          userProfile: _userProfile,
+                        );
                       }).toList(),
                     ),
         ],
@@ -110,12 +128,40 @@ class _DebtsWidgetState extends State<DebtsWidget> {
 
 class _DebtTile extends StatelessWidget {
   final Debt debt;
+  final UserProfile? userProfile;
 
-  const _DebtTile({required this.debt});
+  const _DebtTile({
+    required this.debt,
+    this.userProfile,
+  });
+
+  String _getCurrencySymbol(String? currency) {
+    final symbols = {
+      'USD': '\$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥',
+      'CNY': '¥',
+      'CAD': '\$',
+      'AUD': '\$',
+      'MXN': '\$',
+      'BRL': 'R\$',
+      'ARS': '\$',
+      'CLP': '\$',
+      'COP': '\$',
+      'PEN': 'S/',
+    };
+    return symbols[currency ?? 'USD'] ?? '\$';
+  }
 
   @override
   Widget build(BuildContext context) {
     final progress = debt.progress;
+    final bank = ColombianBanks.getBankByName(debt.name);
+    final currencyFormat = NumberFormat.currency(
+      symbol: _getCurrencySymbol(userProfile?.currency),
+      decimalDigits: 0,
+    );
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -125,16 +171,77 @@ class _DebtTile extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                debt.name,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.textPrimary,
+              Expanded(
+                child: Row(
+                  children: [
+                    // Logo del banco si existe
+                    if (bank != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(
+                          bank.logoUrl,
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppTheme.surfaceColor,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                Icons.account_balance,
+                                color: AppTheme.textTertiary,
+                                size: 16,
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppTheme.surfaceColor,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                    color: AppTheme.positiveGreen,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      child: Text(
+                        debt.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Text(
-                '\$${debt.remainingAmount.toStringAsFixed(0)}',
+                currencyFormat.format(debt.remainingAmount),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

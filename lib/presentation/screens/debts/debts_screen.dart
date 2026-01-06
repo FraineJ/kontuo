@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/colombian_banks.dart';
 import '../../../data/models/debt.dart';
+import '../../../data/models/user_profile.dart';
 import '../../../data/services/storage_service.dart';
 import 'add_debt_screen.dart';
+import 'debt_type_selection_dialog.dart';
 
 class DebtsScreen extends StatefulWidget {
   const DebtsScreen({super.key});
@@ -14,19 +18,29 @@ class DebtsScreen extends StatefulWidget {
 class _DebtsScreenState extends State<DebtsScreen> {
   final StorageService _storageService = StorageService();
   List<Debt> _debts = [];
+  UserProfile? _userProfile;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadDebts();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final debts = await _storageService.getDebts();
+    final profile = await _storageService.getUserProfile();
+    setState(() {
+      _debts = debts..sort((a, b) => b.startDate.compareTo(a.startDate));
+      _userProfile = profile;
+      _isLoading = false;
+    });
   }
 
   Future<void> _loadDebts() async {
     final debts = await _storageService.getDebts();
     setState(() {
       _debts = debts..sort((a, b) => b.startDate.compareTo(a.startDate));
-      _isLoading = false;
     });
   }
 
@@ -107,6 +121,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                         final debt = _debts[index];
                         return _DebtListItem(
                           debt: debt,
+                          userProfile: _userProfile,
                           onTap: () async {
                             await Navigator.of(context).push(
                               MaterialPageRoute(
@@ -123,10 +138,10 @@ class _DebtsScreenState extends State<DebtsScreen> {
       floatingActionButton: FloatingActionButton(
         heroTag: 'fab_debts',
         onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AddDebtScreen()),
-          );
-          _loadDebts();
+          final result = await DebtTypeSelectionDialog.show(context);
+          if (result == true) {
+            _loadDebts();
+          }
         },
         child: const Icon(Icons.add),
       ),
@@ -136,18 +151,44 @@ class _DebtsScreenState extends State<DebtsScreen> {
 
 class _DebtListItem extends StatelessWidget {
   final Debt debt;
+  final UserProfile? userProfile;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const _DebtListItem({
     required this.debt,
+    this.userProfile,
     required this.onTap,
     required this.onDelete,
   });
 
+  String _getCurrencySymbol(String? currency) {
+    final symbols = {
+      'USD': '\$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥',
+      'CNY': '¥',
+      'CAD': '\$',
+      'AUD': '\$',
+      'MXN': '\$',
+      'BRL': 'R\$',
+      'ARS': '\$',
+      'CLP': '\$',
+      'COP': '\$',
+      'PEN': 'S/',
+    };
+    return symbols[currency ?? 'USD'] ?? '\$';
+  }
+
   @override
   Widget build(BuildContext context) {
     final progress = debt.progress;
+    final bank = ColombianBanks.getBankByName(debt.name);
+    final currencyFormat = NumberFormat.currency(
+      symbol: _getCurrencySymbol(userProfile?.currency),
+      decimalDigits: 0,
+    );
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -191,17 +232,76 @@ class _DebtListItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      debt.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary,
-                      ),
+                    child: Row(
+                      children: [
+                        // Logo del banco si existe
+                        if (bank != null) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              bank.logoUrl,
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.surfaceColor,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.account_balance,
+                                    color: AppTheme.textTertiary,
+                                    size: 20,
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.surfaceColor,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                        color: AppTheme.positiveGreen,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: Text(
+                            debt.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Text(
-                    '\$${debt.remainingAmount.toStringAsFixed(0)}',
+                    currencyFormat.format(debt.remainingAmount),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
@@ -234,7 +334,7 @@ class _DebtListItem extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Total: \$${debt.totalAmount.toStringAsFixed(0)}',
+                    'Total: ${currencyFormat.format(debt.totalAmount)}',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppTheme.textTertiary,

@@ -25,6 +25,11 @@ class ColombianBanks {
       logoUrl: 'https://logo.bankconv.com/bancolombia.com?size=256',
     ),
     ColombianBank(
+      name: 'Nequi',
+      domain: 'nequi.com',
+      logoUrl: 'https://logo.bankconv.com/nequi.com?size=256',
+    ),
+    ColombianBank(
       name: 'Banco de Bogotá',
       domain: 'bancodebogota.com',
       logoUrl: 'https://logo.bankconv.com/bancodebogota.com?size=256',
@@ -76,13 +81,8 @@ class ColombianBanks {
     ),
     ColombianBank(
       name: 'Banco Pichincha',
-      domain: 'pichincha.com.co',
-      logoUrl: 'https://logo.bankconv.com/pichincha.com.co?size=256',
-    ),
-    ColombianBank(
-      name: 'Banco GNB Sudameris',
-      domain: 'gnbsudameris.com.co',
-      logoUrl: 'https://logo.bankconv.com/gnbsudameris.com.co?size=256',
+      domain: 'bancopichincha.com.co',
+      logoUrl: 'https://logo.bankconv.com/bancopichincha.com.co?size=256',
     ),
     ColombianBank(
       name: 'Banco Colpatria',
@@ -96,8 +96,8 @@ class ColombianBanks {
     ),
     ColombianBank(
       name: 'Bancoomeva',
-      domain: 'bancoomeva.com',
-      logoUrl: 'https://logo.bankconv.com/bancoomeva.com?size=256',
+      domain: 'bancoomeva.com.co',
+      logoUrl: 'https://logo.bankconv.com/bancoomeva.com.co?size=256',
     ),
     ColombianBank(
       name: 'Banco W',
@@ -106,8 +106,8 @@ class ColombianBanks {
     ),
     ColombianBank(
       name: 'Banco Serfinanza',
-      domain: 'serfinanza.com.co',
-      logoUrl: 'https://logo.bankconv.com/serfinanza.com.co?size=256',
+      domain: 'bancoserfinanza.com',
+      logoUrl: 'https://logo.bankconv.com/bancoserfinanza.com?size=256',
     ),
     ColombianBank(
       name: 'Banco Agrario de Colombia',

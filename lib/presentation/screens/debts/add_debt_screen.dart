@@ -8,8 +8,9 @@ import '../../../data/services/storage_service.dart';
 
 class AddDebtScreen extends StatefulWidget {
   final Debt? debt;
+  final String? initialBankName;
   
-  const AddDebtScreen({super.key, this.debt});
+  const AddDebtScreen({super.key, this.debt, this.initialBankName});
 
   @override
   State<AddDebtScreen> createState() => _AddDebtScreenState();
@@ -39,6 +40,11 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       _termMonthsController.text = d.termMonths?.toString() ?? '';
       _startDate = d.startDate;
       _hasReminders = d.hasReminders;
+    } else if (widget.initialBankName != null) {
+      // Si viene de selección de banco, pre-llenar el nombre
+      _nameController.text = widget.initialBankName!;
+      // Establecer tipo como tarjeta de crédito por defecto para bancos
+      _selectedType = DebtType.creditCard;
     }
   }
 
