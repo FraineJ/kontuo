@@ -30,6 +30,33 @@ class _DebtsScreenState extends State<DebtsScreen> {
     });
   }
 
+  Future<void> _deleteDebt(Debt debt) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardBackground,
+        title: const Text('Eliminar Deuda'),
+        content: Text('¿Estás seguro de que quieres eliminar "${debt.name}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.negativeRed),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _storageService.deleteDebt(debt.id);
+      _loadDebts();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,6 +115,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                             );
                             _loadDebts();
                           },
+                          onDelete: () => _deleteDebt(debt),
                         );
                       },
                     ),
@@ -109,8 +137,13 @@ class _DebtsScreenState extends State<DebtsScreen> {
 class _DebtListItem extends StatelessWidget {
   final Debt debt;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
-  const _DebtListItem({required this.debt, required this.onTap});
+  const _DebtListItem({
+    required this.debt,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +153,35 @@ class _DebtListItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
+        onLongPress: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: AppTheme.cardBackground,
+            builder: (context) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.edit, color: AppTheme.textPrimary),
+                    title: const Text('Editar'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onTap();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.delete, color: AppTheme.negativeRed),
+                    title: const Text('Eliminar', style: TextStyle(color: AppTheme.negativeRed)),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onDelete();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

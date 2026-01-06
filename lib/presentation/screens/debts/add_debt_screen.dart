@@ -19,7 +19,6 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _totalAmountController = TextEditingController();
-  final _remainingAmountController = TextEditingController();
   final _interestRateController = TextEditingController();
   final _termMonthsController = TextEditingController();
   final StorageService _storageService = StorageService();
@@ -36,7 +35,6 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       _nameController.text = d.name;
       _selectedType = d.type;
       _totalAmountController.text = d.totalAmount.toStringAsFixed(2);
-      _remainingAmountController.text = d.remainingAmount.toStringAsFixed(2);
       _interestRateController.text = d.interestRate?.toStringAsFixed(2) ?? '';
       _termMonthsController.text = d.termMonths?.toString() ?? '';
       _startDate = d.startDate;
@@ -48,7 +46,6 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   void dispose() {
     _nameController.dispose();
     _totalAmountController.dispose();
-    _remainingAmountController.dispose();
     _interestRateController.dispose();
     _termMonthsController.dispose();
     super.dispose();
@@ -85,13 +82,16 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   Future<void> _saveDebt() async {
     if (_formKey.currentState!.validate()) {
       final totalAmount = double.tryParse(_totalAmountController.text.replaceAll(',', '')) ?? 0;
-      final remainingAmount = double.tryParse(_remainingAmountController.text.replaceAll(',', '')) ?? 0;
       final interestRate = _interestRateController.text.isNotEmpty
           ? double.tryParse(_interestRateController.text.replaceAll(',', ''))
           : null;
       final termMonths = _termMonthsController.text.isNotEmpty
           ? int.tryParse(_termMonthsController.text)
           : null;
+      
+      // Si es una deuda nueva, el monto restante es igual al total
+      // Si es edición, mantener el monto restante actual
+      final remainingAmount = widget.debt?.remainingAmount ?? totalAmount;
       
       final debt = Debt(
         id: widget.debt?.id ?? const Uuid().v4(),
@@ -218,30 +218,6 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                   },
                 ),
                 const SizedBox(height: 24),
-                TextFormField(
-                  controller: _remainingAmountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Monto Restante',
-                    hintText: '0.00',
-                    prefixText: '\$ ',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
-                  ],
-                  style: const TextStyle(color: AppTheme.textPrimary),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingresa el monto restante';
-                    }
-                    final amount = double.tryParse(value.replaceAll(',', ''));
-                    if (amount == null || amount < 0) {
-                      return 'Ingresa un monto válido';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
@@ -320,4 +296,5 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
     );
   }
 }
+
 
