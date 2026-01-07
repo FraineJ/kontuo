@@ -9,6 +9,7 @@ import '../../widgets/transaction_chart.dart';
 import '../../widgets/recent_transactions_widget.dart';
 import '../../widgets/goals_widget.dart';
 import '../../widgets/debts_widget.dart';
+import '../../widgets/news_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -118,6 +119,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     GoalsWidget(onRefresh: _loadData),
                     const SizedBox(height: 24),
                     DebtsWidget(onRefresh: _loadData),
+                    const SizedBox(height: 24),
+                    const NewsWidget(),
                     const SizedBox(height: 80), // Space for FAB
                   ],
                 ),
