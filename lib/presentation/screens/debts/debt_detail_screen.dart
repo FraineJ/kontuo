@@ -592,7 +592,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                   label: const Text('Realizar Pago'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.positiveGreen,
-                    foregroundColor: AppTheme.textPrimary,
+                    foregroundColor: AppTheme.darkBackground,
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
