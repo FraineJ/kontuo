@@ -9,6 +9,7 @@ import 'presentation/screens/onboarding/user_profile_screen.dart';
 import 'presentation/screens/onboarding/configuration_screen.dart';
 import 'presentation/screens/onboarding/permissions_screen.dart';
 import 'presentation/screens/main_navigation.dart';
+import 'presentation/screens/loans/loans_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,7 @@ class KontuoApp extends StatelessWidget {
         '/onboarding/configuration': (context) => const ConfigurationScreen(),
         '/onboarding/permissions': (context) => const PermissionsScreen(),
         '/home': (context) => const MainNavigation(),
+        '/loans': (context) => const LoansScreen(),
       },
     );
   }

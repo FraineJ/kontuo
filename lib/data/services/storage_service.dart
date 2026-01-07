@@ -5,12 +5,14 @@ import '../models/user_profile.dart';
 import '../models/transaction.dart';
 import '../models/goal.dart';
 import '../models/debt.dart';
+import '../models/loan.dart';
 
 class StorageService {
   static const String _keyUserProfile = 'user_profile';
   static const String _keyTransactions = 'transactions';
   static const String _keyGoals = 'goals';
   static const String _keyDebts = 'debts';
+  static const String _keyLoans = 'loans';
   static const _keySimulations = 'credit_simulations';
 
   // User Profile
@@ -134,6 +136,42 @@ class StorageService {
     await saveDebts(debts);
   }
 
+  // Loans
+  Future<void> saveLoans(List<Loan> loans) async {
+    final prefs = await SharedPreferences.getInstance();
+    final loansJson = loans.map((d) => d.toJson()).toList();
+    await prefs.setString(_keyLoans, jsonEncode(loansJson));
+  }
+
+  Future<List<Loan>> getLoans() async {
+    final prefs = await SharedPreferences.getInstance();
+    final loansJson = prefs.getString(_keyLoans);
+    if (loansJson == null) return [];
+    final List<dynamic> decoded = jsonDecode(loansJson);
+    return decoded.map((json) => Loan.fromJson(json)).toList();
+  }
+
+  Future<void> addLoan(Loan loan) async {
+    final loans = await getLoans();
+    loans.add(loan);
+    await saveLoans(loans);
+  }
+
+  Future<void> updateLoan(Loan loan) async {
+    final loans = await getLoans();
+    final index = loans.indexWhere((d) => d.id == loan.id);
+    if (index != -1) {
+      loans[index] = loan;
+      await saveLoans(loans);
+    }
+  }
+
+  Future<void> deleteLoan(String id) async {
+    final loans = await getLoans();
+    loans.removeWhere((d) => d.id == id);
+    await saveLoans(loans);
+  }
+
   // Clear all data
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
@@ -141,6 +179,7 @@ class StorageService {
     await prefs.remove(_keyTransactions);
     await prefs.remove(_keyGoals);
     await prefs.remove(_keyDebts);
+    await prefs.remove(_keyLoans);
   }
 
 
