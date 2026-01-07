@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kontuo/presentation/screens/credits/credits_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/transactions/transactions_screen.dart';
 import '../screens/goals/goals_screen.dart';
@@ -18,6 +19,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const TransactionsScreen(),
+    const CreditSimulationScreen(),
     const GoalsScreen(),
     const ProfileScreen(),
   ];
@@ -46,7 +48,12 @@ class _MainNavigationState extends State<MainNavigation> {
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
-            label: 'Transacciones',
+            label: 'Transac...',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calculate_outlined),
+            selectedIcon: Icon(Icons.calculate),
+            label: 'Simulador',
           ),
           NavigationDestination(
             icon: Icon(Icons.flag_outlined),

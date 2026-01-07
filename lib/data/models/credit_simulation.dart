@@ -16,7 +16,7 @@ class CreditSimulation {
     required this.monthlyPayment,
     required this.totalInterest,
     required this.totalPayment,
-    required this.createdAt,
+    required this.createdAt, 
   });
 
   Map<String, dynamic> toJson() => {
@@ -39,7 +39,7 @@ class CreditSimulation {
       monthlyPayment: json['monthlyPayment'],
       totalInterest: json['totalInterest'],
       totalPayment: json['totalPayment'],
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: DateTime.parse(json['createdAt']), 
     );
   }
 }
