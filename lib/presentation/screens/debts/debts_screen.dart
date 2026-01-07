@@ -8,6 +8,7 @@ import '../../../data/services/storage_service.dart';
 import 'add_debt_screen.dart';
 import 'add_debt_payment_dialog.dart';
 import 'debt_type_selection_dialog.dart';
+import 'debt_detail_screen.dart';
 
 class DebtsScreen extends StatefulWidget {
   const DebtsScreen({super.key});
@@ -124,6 +125,16 @@ class _DebtsScreenState extends State<DebtsScreen> {
                           debt: debt,
                           userProfile: _userProfile,
                           onTap: () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => DebtDetailScreen(debt: debt),
+                              ),
+                            );
+                            if (result == true) {
+                              _loadDebts();
+                            }
+                          },
+                          onEdit: () async {
                             await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => AddDebtScreen(debt: debt),
@@ -164,6 +175,7 @@ class _DebtListItem extends StatelessWidget {
   final Debt debt;
   final UserProfile? userProfile;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onPayment;
 
@@ -171,6 +183,7 @@ class _DebtListItem extends StatelessWidget {
     required this.debt,
     this.userProfile,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
     required this.onPayment,
   });
@@ -216,11 +229,19 @@ class _DebtListItem extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
+                    leading: const Icon(Icons.visibility, color: AppTheme.textPrimary),
+                    title: const Text('Ver Detalle'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onTap();
+                    },
+                  ),
+                  ListTile(
                     leading: const Icon(Icons.edit, color: AppTheme.textPrimary),
                     title: const Text('Editar'),
                     onTap: () {
                       Navigator.of(context).pop();
-                      onTap();
+                      onEdit();
                     },
                   ),
                   ListTile(
