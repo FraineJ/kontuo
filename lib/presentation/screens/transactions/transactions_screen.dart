@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/models/transaction.dart';
 import '../../../data/services/storage_service.dart';
 import 'add_transaction_screen.dart';
+import 'transaction_detail_screen.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -110,6 +111,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         return _TransactionListItem(
                           transaction: transaction,
                           onTap: () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => TransactionDetailScreen(transaction: transaction),
+                              ),
+                            );
+                            if (result == true) {
+                              _loadTransactions();
+                            }
+                          },
+                          onEdit: () async {
                             await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => AddTransactionScreen(transaction: transaction),
@@ -139,11 +150,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 class _TransactionListItem extends StatelessWidget {
   final Transaction transaction;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _TransactionListItem({
     required this.transaction,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -219,11 +232,19 @@ class _TransactionListItem extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
+                    leading: const Icon(Icons.visibility, color: AppTheme.textPrimary),
+                    title: const Text('Ver Detalle'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onTap();
+                    },
+                  ),
+                  ListTile(
                     leading: const Icon(Icons.edit, color: AppTheme.textPrimary),
                     title: const Text('Editar'),
                     onTap: () {
                       Navigator.of(context).pop();
-                      onTap();
+                      onEdit();
                     },
                   ),
                   ListTile(

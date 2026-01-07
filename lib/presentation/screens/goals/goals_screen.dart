@@ -5,6 +5,7 @@ import '../../../data/models/goal.dart';
 import '../../../data/services/storage_service.dart';
 import 'add_goal_screen.dart';
 import 'add_payment_dialog.dart';
+import 'goal_detail_screen.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -30,6 +31,33 @@ class _GoalsScreenState extends State<GoalsScreen> {
       _goals = goals..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       _isLoading = false;
     });
+  }
+
+  Future<void> _deleteGoal(Goal goal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardBackground,
+        title: const Text('Eliminar Meta'),
+        content: Text('¿Estás seguro de que quieres eliminar "${goal.name}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.negativeRed),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _storageService.deleteGoal(goal.id);
+      _loadGoals();
+    }
   }
 
   @override
@@ -83,6 +111,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         return _GoalListItem(
                           goal: goal,
                           onTap: () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => GoalDetailScreen(goal: goal),
+                              ),
+                            );
+                            if (result == true) {
+                              _loadGoals();
+                            }
+                          },
+                          onEdit: () async {
                             await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => AddGoalScreen(goal: goal),
@@ -90,6 +128,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                             );
                             _loadGoals();
                           },
+                          onDelete: () => _deleteGoal(goal),
                           onRefresh: _loadGoals,
                         );
                       },
@@ -112,11 +151,15 @@ class _GoalsScreenState extends State<GoalsScreen> {
 class _GoalListItem extends StatelessWidget {
   final Goal goal;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
   final VoidCallback onRefresh;
 
   const _GoalListItem({
     required this.goal, 
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
     required this.onRefresh,
   });
 
@@ -134,6 +177,43 @@ class _GoalListItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
+        onLongPress: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: AppTheme.cardBackground,
+            builder: (context) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.visibility, color: AppTheme.textPrimary),
+                    title: const Text('Ver Detalle'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onTap();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.edit, color: AppTheme.textPrimary),
+                    title: const Text('Editar'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onEdit();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.delete, color: AppTheme.negativeRed),
+                    title: const Text('Eliminar', style: TextStyle(color: AppTheme.negativeRed)),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onDelete();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
