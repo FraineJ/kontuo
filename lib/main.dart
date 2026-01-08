@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
 import 'data/services/storage_service.dart';
@@ -12,7 +13,8 @@ import 'presentation/screens/main_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  // Initialize Google Mobile Ads
+  await MobileAds.instance.initialize();
   // Initialize date formatting for Spanish locale
   await initializeDateFormatting('es', null);
   

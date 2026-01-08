@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/transaction.dart';
 import '../../../data/services/storage_service.dart';
+import '../../widgets/banner_ad_widget.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_detail_screen.dart';
 
@@ -105,8 +107,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: _transactions.length,
+                      itemCount: _transactions.length + 1, // +1 for banner ad
                       itemBuilder: (context, index) {
+                        // Show banner ad at the end of the list
+                        if (index == _transactions.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 16, bottom: 80),
+                            child: BannerAdWidget(
+                              adSize: AdSize.banner,
+                              showBorder: true,
+                            ),
+                          );
+                        }
+                        
                         final transaction = _transactions[index];
                         return _TransactionListItem(
                           transaction: transaction,
