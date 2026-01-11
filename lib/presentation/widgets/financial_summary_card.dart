@@ -4,7 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/transaction.dart';
 
-class FinancialSummaryCard extends StatelessWidget {
+class FinancialSummaryCard extends StatefulWidget {
   final UserProfile profile;
   final List<Transaction> transactions;
 
@@ -14,12 +14,145 @@ class FinancialSummaryCard extends StatelessWidget {
     required this.transactions,
   });
 
+  @override
+  State<FinancialSummaryCard> createState() => _FinancialSummaryCardState();
+}
+
+class _FinancialSummaryCardState extends State<FinancialSummaryCard>
+    with SingleTickerProviderStateMixin {
+  bool _isVisible = true; // Inicialmente visible
+  late AnimationController _animationController;
+  late Animation<double> _balanceAnimation;
+  late Animation<double> _incomeAnimation;
+  late Animation<double> _expenseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _initializeAnimations();
+
+    // Iniciar animación automáticamente cuando se muestra por primera vez
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _isVisible) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  void _initializeAnimations() {
+    final balance = _calculateBalance();
+    final income = _calculateMonthlyIncome();
+    final expenses = _calculateMonthlyExpenses();
+
+    _balanceAnimation = Tween<double>(begin: 0, end: balance).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _incomeAnimation = Tween<double>(begin: 0, end: income).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _expenseAnimation = Tween<double>(begin: 0, end: expenses).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(FinancialSummaryCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Si los valores cambian, actualizar las animaciones
+    if (oldWidget.transactions != widget.transactions ||
+        oldWidget.profile != widget.profile) {
+      _updateAnimations();
+    }
+  }
+
+  void _updateAnimations() {
+    final balance = _calculateBalance();
+    final income = _calculateMonthlyIncome();
+    final expenses = _calculateMonthlyExpenses();
+
+    final currentBalance = _balanceAnimation.value;
+    final currentIncome = _incomeAnimation.value;
+    final currentExpense = _expenseAnimation.value;
+
+    _balanceAnimation = Tween<double>(
+      begin: currentBalance,
+      end: balance,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _incomeAnimation = Tween<double>(
+      begin: currentIncome,
+      end: income,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _expenseAnimation = Tween<double>(
+      begin: currentExpense,
+      end: expenses,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    if (_isVisible) {
+      if (_animationController.status == AnimationStatus.completed ||
+          _animationController.status == AnimationStatus.forward) {
+        _animationController.reset();
+      }
+      _animationController.forward();
+    }
+  }
+
+  void _toggleVisibility() {
+    setState(() {
+      _isVisible = !_isVisible;
+      if (_isVisible) {
+        _updateAnimations();
+        _animationController.forward();
+      } else {
+        _animationController.reset();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   double _calculateBalance() {
     double income = 0;
     double expenses = 0;
 
     // Incluir TODAS las transacciones históricas para el balance total
-    for (var transaction in transactions) {
+    for (var transaction in widget.transactions) {
       if (transaction.type == TransactionType.income) {
         income += transaction.amount;
       } else {
@@ -33,7 +166,7 @@ class FinancialSummaryCard extends StatelessWidget {
   double _calculateMonthlyIncome() {
     final now = DateTime.now();
     
-    return transactions
+    return widget.transactions
         .where((t) => 
             t.type == TransactionType.income && 
             t.date.year == now.year && 
@@ -44,7 +177,7 @@ class FinancialSummaryCard extends StatelessWidget {
   double _calculateMonthlyExpenses() {
     final now = DateTime.now();
     
-    return transactions
+    return widget.transactions
         .where((t) => 
             t.type == TransactionType.expense && 
             t.date.year == now.year && 
@@ -54,10 +187,11 @@ class FinancialSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: _getCurrencySymbol(profile.currency));
+    final currencyFormat = NumberFormat.currency(
+      symbol: _getCurrencySymbol(widget.profile.currency),
+      decimalDigits: 0,
+    );
     final balance = _calculateBalance();
-    final income = _calculateMonthlyIncome();
-    final expenses = _calculateMonthlyExpenses();
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -67,71 +201,118 @@ class FinancialSummaryCard extends StatelessWidget {
         border: Border.all(color: AppTheme.borderColor),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Balance Actual',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            currencyFormat.format(balance),
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.w600,
-              color: balance >= 0 ? AppTheme.positiveGreen : AppTheme.negativeRed,
-              letterSpacing: -1,
-            ),
-          ),
-          const SizedBox(height: 24),
+          // Header con botón de toggle
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
-                child: _buildIndicator(
-                  'Ingresos',
-                  currencyFormat.format(income),
-                  AppTheme.positiveGreen,
+              Text(
+                'Balance Actual',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textSecondary,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildIndicator(
-                  'Gastos',
-                  currencyFormat.format(expenses),
-                  AppTheme.negativeRed,
+              IconButton(
+                icon: Icon(
+                  _isVisible ? Icons.visibility_off : Icons.visibility,
+                  size: 20,
+                  color: AppTheme.textSecondary,
+                ),
+                onPressed: _toggleVisibility,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 32,
+                  minHeight: 32,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          // Balance con animación y FittedBox
+          AnimatedBuilder(
+            animation: _balanceAnimation,
+            builder: (context, child) {
+              final animatedBalance = _isVisible ? _balanceAnimation.value : 0.0;
+              final displayBalance = _isVisible ? animatedBalance : 0.0;
+              
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _isVisible ? currencyFormat.format(displayBalance) : '••••••••',
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w600,
+                    color: _isVisible && balance >= 0
+                        ? AppTheme.positiveGreen
+                        : _isVisible
+                            ? AppTheme.negativeRed
+                            : AppTheme.textTertiary,
+                    letterSpacing: -1,
+                  ),
+                  maxLines: 1,
+                ),
+              );
+            },
+          ),
+          if (_isVisible) ...[
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildIndicator(
+                  'Ingresos',
+                  _incomeAnimation,
+                  AppTheme.positiveGreen,
+                  currencyFormat,
+                ),
+                const SizedBox(width: 16),
+                _buildIndicator(
+                  'Gastos',
+                  _expenseAnimation,
+                  AppTheme.negativeRed,
+                  currencyFormat,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildIndicator(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppTheme.textTertiary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: color,
-          ),
-        ),
-      ],
+  Widget _buildIndicator(
+    String label,
+    Animation<double> animation,
+    Color color,
+    NumberFormat currencyFormat,
+  ) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.textTertiary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _isVisible ? currencyFormat.format(animation.value) : '••••',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: _isVisible ? color : AppTheme.textTertiary,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
